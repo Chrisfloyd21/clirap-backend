@@ -39,4 +39,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Exposer le port 80
 EXPOSE 80
 
-CMD php artisan migrate:fresh --force && php-fpm
+# On lance Apache uniquement. Plus de migration ici.
+CMD ["apache2-foreground"]
