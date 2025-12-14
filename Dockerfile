@@ -1,62 +1,39 @@
-# ============================
-#   STAGE 1 : Composer Build
-# ============================
-FROM composer:2 AS composer_stage
+# On utilise l'image officielle PHP avec Apache inclus
+FROM php:8.2-apache
 
-WORKDIR /app
-
-COPY composer.json composer.lock ./
-
-# On installe les dépendances sans scripts pour l'instant
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts
-
-# ============================
-#   STAGE 2 : PHP Application
-# ============================
-FROM php:8.2-fpm
-
-# 1. Installation des dépendances système et nettoyage (pour réduire la taille de l'image)
+# Installer les extensions système nécessaires pour Laravel et Postgres
 RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libonig-dev libxml2-dev libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    libpq-dev \
+    libzip-dev \
+    unzip \
+    git \
+    && docker-php-ext-install pdo pdo_pgsql zip
 
-# 2. IMPORTANT : Récupérer l'exécutable Composer dans cette étape aussi
-# (Nécessaire pour lancer 'composer dump-autoload' ou 'package:discover')
+# Activer le module de réécriture d'URL d'Apache (indispensable pour Laravel)
+RUN a2enmod rewrite
+
+# Configurer le dossier racine vers /public (Sécurité Laravel)
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf/apache2.conf
+
+# Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www
+# Définir le dossier de travail
+WORKDIR /var/www/html
 
-# 3. Copier les fichiers du projet
+# Copier tous les fichiers du projet
 COPY . .
 
-# 4. Copier le dossier vendor généré à l'étape 1
-COPY --from=composer_stage /app/vendor ./vendor
+# Installer les dépendances PHP (Optimisé pour la prod)
+RUN composer install --no-dev --optimize-autoloader
 
-# 5. Configuration des permissions (Critique pour Laravel)
-# On crée les dossiers s'ils n'existent pas et on donne les droits
-RUN mkdir -p storage/framework/sessions \
-    storage/framework/views \
-    storage/framework/cache \
-    storage/logs \
-    bootstrap/cache \
-    && chown -R www-data:www-data /var/www \
-    && chmod -R 775 storage bootstrap/cache
+# Donner les permissions à Apache sur les dossiers de stockage
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 6. Finalisation de l'autoload et scripts Laravel
-# Maintenant que 'artisan' et 'composer' sont là, on peut tout lancer proprement.
-RUN composer dump-autoload --optimize
-RUN php artisan package:discover --ansi
+# Exposer le port 80 pour Render
+EXPOSE 80
 
-# 7. Optimisation pour la Prod (Cache au lieu de Clear)
-# En build Docker, on préfère mettre en cache la config
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
-EXPOSE 9000
-
-# 8. Commande de démarrage
-# Note: Idéalement, les migrations ne devraient pas être ici pour éviter les conflits si tu scales,
-# mais pour une instance unique, ça fonctionne.
-CMD sh -c "php artisan migrate --force && php-fpm"
+# Lancer Apache au premier plan
+CMD ["apache2-foreground"]
