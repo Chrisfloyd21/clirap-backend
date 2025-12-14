@@ -10,54 +10,56 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --no-scripts
 
 # ============================
-#   STAGE 2 : PHP + APACHE (Changement ici)
+#   STAGE 2 : PHP + APACHE
 # ============================
 FROM php:8.2-apache
 
-# 1. Installation des dépendances système
+# 1. Installation des libs système
 RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libonig-dev libxml2-dev libpq-dev \
+    libpng-dev libonig-dev libxml2-dev libpq-dev zip unzip \
     && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2. Activer le module "Rewrite" d'Apache (INDISPENSABLE pour Laravel)
+# 2. Configuration APACHE (Critique pour le 404)
+# On active le rewrite
 RUN a2enmod rewrite
 
-# 3. Configurer Apache pour pointer vers le dossier /public de Laravel
+# On change la racine vers /public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# 4. Copier Composer
+# SUPER IMPORTANT : On autorise le .htaccess pour gérer les routes API
+RUN echo '<Directory /var/www/html/public/>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' > /etc/apache2/conf-available/laravel.conf \
+    && a2enconf laravel
+
+# 3. Copier Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# 5. Copier l'application
+# 4. Copier les fichiers
 COPY . .
 COPY --from=composer_stage /app/vendor ./vendor
 
-# 6. Permissions
-RUN mkdir -p storage/framework/sessions \
-    storage/framework/views \
-    storage/framework/cache \
-    storage/logs \
-    bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html \
+# 5. Permissions
+RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# 7. Autoload et Scripts
+# 6. Finalisation Laravel
 RUN composer dump-autoload --optimize
-RUN php artisan package:discover --ansi
 
-# 8. Caches
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+# On ne met pas en cache la config ici pour éviter les bugs d'env au build
+# On nettoie tout pour être sûr
+RUN php artisan optimize:clear
 
-# 9. Port (Render détectera le port 80 automatiquement)
 EXPOSE 80
 
-# 10. Démarrage (Migrate + Apache)
-# On garde migrate --force. Si ça plante, remets migrate:fresh temporairement comme avant.
-CMD php artisan migrate --force && apache2-foreground
+# 7. COMMANDE DE DÉMARRAGE (Avec Reset DB)
+# J'ai remis migrate:fresh car tu as encore des erreurs 500 liées à la DB.
+# Une fois que le site marche, remets 'migrate --force' au prochain déploiement.
+CMD php artisan migrate:fresh --force --seed && apache2-foreground
