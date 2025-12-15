@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use App\Models\User;
 
 class PostFactory extends Factory
 {
@@ -27,8 +28,10 @@ class PostFactory extends Factory
             'slug' => Str::slug($chosenTitle) . '-' . rand(100, 999),
             'content_it' => $content,
             'excerpt_it' => Str::limit($content, 100),
-            'image_url' => 'https://source.unsplash.com/random/800x600/?charity,africa',
-            'is_published' => true,
+            'image_url' => 'https://placehold.co/800x600/png?text=News+Clirap',
+            'is_published' => true, // Bien un booléen, c'est parfait.
+            // On s'assure qu'un user est toujours lié si non fourni
+            'user_id' => User::factory(), 
         ];
     }
 }
