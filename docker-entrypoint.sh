@@ -3,21 +3,25 @@ set -e
 
 echo "🚀 Démarrage du conteneur..."
 
-# 1. Attendre que la DB Neon se réveille (Indispensable en gratuit)
-echo "💤 Pause de 10s pour le réveil de la Base de Données..."
+# 1. Attente de sécurité pour la DB
+echo "💤 Pause (10s) pour le réveil de la DB..."
 sleep 10
 
-# 2. Configuration du cache
+# 2. Cache
 echo "🔥 Mise en cache..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# 3. Migration brutale
-# On utilise migrate:fresh --force qui gère tout (drop + create)
-# Si ça plante ici, c'est une erreur de connexion (SSL) ou de droits.
-echo "🐘 Lancement de migrate:fresh..."
-php artisan migrate:fresh --force --seed
+# 3. Nettoyage EXPLICITE (étape séparée)
+# On tente de supprimer les tables et les types (enums) qui bloquent souvent Postgres
+echo "🧹 Nettoyage de la base de données..."
+php artisan db:wipe --force --drop-types --drop-views
+
+# 4. Migration EXPLICITE (étape séparée)
+# On ne fait pas 'fresh', car on vient de wipe.
+echo "🐘 Lancement des migrations..."
+php artisan migrate --force --seed
 
 echo "🌍 Lancement d'Apache..."
 apache2-foreground
