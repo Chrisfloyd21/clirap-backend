@@ -33,7 +33,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # 8. Installation des dépendances PHP (Sans scripts pour l'instant pour éviter l'erreur)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+RUN composer install  --optimize-autoloader --no-interaction --no-scripts
 
 # 9. Permissions des dossiers
 RUN chown -R www-data:www-data /var/www/html \
