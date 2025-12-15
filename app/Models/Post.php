@@ -12,6 +12,9 @@ class Post extends Model
     protected $fillable = [
         'title_it', 'slug', 'content_it', 'image_url', 'excerpt_it', 'user_id', 'is_published'
     ];
+     protected $casts = [
+        'is_published' => 'boolean',
+    ];
 
     public function user() {
         return $this->belongsTo(User::class);

@@ -16,4 +16,7 @@ class Project extends Model
         'image_url', 
         'is_completed'
     ];
+       protected $casts = [
+        'is_completed' => 'boolean',
+    ];
 }
