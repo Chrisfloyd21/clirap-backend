@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\DB; // <--- OBLIGATOIRE
 
 class ProjectFactory extends Factory
 {
@@ -14,12 +15,10 @@ class ProjectFactory extends Factory
             'title_it' => $this->faker->sentence(6),
             'description_it' => $this->faker->paragraph(3),
             'category' => $this->faker->randomElement($categories),
-            // J'ai changé l'URL d'image pour un placeholder stable (Unsplash plante souvent en prod)
-            'image_url' => 'https://placehold.co/800x600/png?text=Progetto+Clirap', 
+            'image_url' => 'https://placehold.co/800x600/png?text=Progetto+Clirap',
             
-            // CORRECTION CRITIQUE POUR POSTGRESQL :
-            // On utilise false ou true (booléen), JAMAIS 0 ou 1.
-            'is_completed' => $this->faker->boolean(20), // 20% de chance d'être true
+            // C'EST LÀ QUE SE JOUE LA RÉUSSITE DU SEEDER 👇
+            'is_completed' => DB::raw($this->faker->boolean() ? 'true' : 'false'),
         ];
     }
 }

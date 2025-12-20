@@ -21,7 +21,7 @@ php artisan db:wipe --force --drop-types --drop-views
 # 4. Migration EXPLICITE (étape séparée)
 # On ne fait pas 'fresh', car on vient de wipe.
 echo "🐘 Lancement des migrations..."
-php artisan migrate --force --seed
+php artisan migrate --force
 
 echo "🌍 Lancement d'Apache..."
 apache2-foreground

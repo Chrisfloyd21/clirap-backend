@@ -12,13 +12,12 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Créer le compte Admin (Sécurisé avec firstOrCreate)
-        // Cela évite l'erreur "Duplicate entry" si le script se relance
+        // 1. Créer le compte Admin (Sécurisé)
         $admin = User::firstOrCreate(
-            ['email' => 'admin@clirap.it'], // On vérifie si cet email existe
+            ['email' => 'admin@clirap.it'],
             [
                 'name' => 'Super Admin',
-                'password' => bcrypt('password'), // Le mot de passe
+                'password' => bcrypt('password'),
                 'email_verified_at' => now(),
             ]
         );
@@ -26,10 +25,10 @@ class DatabaseSeeder extends Seeder
         echo "✅ Compte Admin prêt : admin@clirap.it / password\n";
 
         // 2. Créer des Projets fictifs
+        // ATTENTION : Cela ne marchera que si ProjectFactory utilise DB::raw() (voir ci-dessous)
         Project::factory(10)->create(); 
         
         // 3. Créer des Articles de Blog fictifs liés à l'admin
-        // On vérifie qu'on a bien un utilisateur avant de créer les posts
         if ($admin) {
             Post::factory(10)->create(['user_id' => $admin->id]);
         }

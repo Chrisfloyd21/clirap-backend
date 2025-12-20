@@ -1,22 +1,35 @@
 <?php
 
-namespace App\Models;
+namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // <--- ICI
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
+use App\Models\User;
+use Illuminate\Support\Facades\DB; // <--- TRES IMPORTANT : AJOUTE CET IMPORT
 
-class Post extends Model
+class PostFactory extends Factory
 {
-    use HasFactory; // <--- ET ICI
+    public function definition(): array
+    {
+        $titles = [
+            'Grande successo per la cena di beneficenza',
+            'Report della missione sul campo',
+            'La storia di Amina',
+            'Emergenza siccità',
+        ];
+        $chosenTitle = $this->faker->randomElement($titles);
 
-    protected $fillable = [
-        'title_it', 'slug', 'content_it', 'image_url', 'excerpt_it', 'user_id', 'is_published'
-    ];
-     protected $casts = [
-        'is_published' => 'boolean',
-    ];
-
-    public function user() {
-        return $this->belongsTo(User::class);
+        return [
+            'title_it' => $chosenTitle,
+            'slug' => Str::slug($chosenTitle) . '-' . rand(100, 999),
+            'content_it' => "Contenu de test...",
+            'excerpt_it' => "Extrait de test...",
+            'image_url' => 'https://placehold.co/800x600/png?text=News+Clirap',
+            
+            // LA SOLUTION BLINDÉE :
+            'is_published' => DB::raw('true'), 
+            
+            'user_id' => User::factory(),
+        ];
     }
 }
