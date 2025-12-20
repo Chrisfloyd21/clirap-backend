@@ -1,19 +1,27 @@
 #!/bin/bash
-
-# On arrête le script si une commande échoue
 set -e
 
-# Mettre en cache la config et les routes pour la performance
+echo "🚀 Démarrage..."
+
+# Pause pour que NeonDB se réveille
+echo "💤 Attente DB (5s)..."
+sleep 5
+
+# Nettoyage
+echo "🧹 Nettoyage cache..."
+php artisan optimize:clear
+
+# Cache
+echo "🔥 Mise en cache..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# (Optionnel) Lancer les migrations automatiquement
-# Attention : sur le plan gratuit, la DB peut être lente à démarrer,
-# parfois cette commande échoue si la DB n'est pas prête.
-echo "Running migrations..."
+# Migration & Seed
+echo "🐘 Migration & Données..."
 php artisan migrate --force
+# C'est ici que tes données sont créées
+php artisan db:seed --force 
 
-# Démarrer Apache en premier plan
-echo "Starting Apache..."
+echo "🌍 Apache Start..."
 apache2-foreground

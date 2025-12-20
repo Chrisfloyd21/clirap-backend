@@ -5,20 +5,15 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use App\Models\User;
-use Illuminate\Support\Facades\DB; // <--- OBLIGATOIRE
+use Illuminate\Support\Facades\DB; // <--- TRES IMPORTANT
 
 class PostFactory extends Factory
 {
     public function definition(): array
     {
-        $titles = [
-            'Grande successo per la cena di beneficenza',
-            'Report della missione sul campo',
-            'La storia di Amina',
-            'Emergenza siccità',
-        ];
+        $titles = ['Missione Compiuta', 'Nuova Scuola', 'Aiuto Umanitario', 'Grazie a tutti'];
         $chosenTitle = $this->faker->randomElement($titles);
-        $content = "Contenu de test pour l'article...";
+        $content = "Ceci est un contenu de test généré automatiquement.";
 
         return [
             'title_it' => $chosenTitle,
@@ -27,7 +22,7 @@ class PostFactory extends Factory
             'excerpt_it' => Str::limit($content, 100),
             'image_url' => 'https://placehold.co/800x600/png?text=News+Clirap',
             
-            // C'EST LÀ QUE SE JOUE LA RÉUSSITE DU SEEDER 👇
+            // LA CORRECTION
             'is_published' => DB::raw('true'),
             
             'user_id' => User::factory(),

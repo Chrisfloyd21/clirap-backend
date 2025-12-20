@@ -1,27 +1,27 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Démarrage du conteneur..."
+echo "🚀 Démarrage..."
 
-# 1. Attente de sécurité pour la DB
-echo "💤 Pause (10s) pour le réveil de la DB..."
-sleep 10
+# Pause pour que NeonDB se réveille
+echo "💤 Attente DB (5s)..."
+sleep 5
 
-# 2. Cache
+# Nettoyage
+echo "🧹 Nettoyage cache..."
+php artisan optimize:clear
+
+# Cache
 echo "🔥 Mise en cache..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# 3. Nettoyage EXPLICITE (étape séparée)
-# On tente de supprimer les tables et les types (enums) qui bloquent souvent Postgres
-echo "🧹 Nettoyage de la base de données..."
-php artisan db:wipe --force --drop-types --drop-views
-
-# 4. Migration EXPLICITE (étape séparée)
-# On ne fait pas 'fresh', car on vient de wipe.
-echo "🐘 Lancement des migrations..."
+# Migration & Seed
+echo "🐘 Migration & Données..."
 php artisan migrate --force
+# C'est ici que tes données sont créées
+php artisan db:seed --force 
 
-echo "🌍 Lancement d'Apache..."
+echo "🌍 Apache Start..."
 apache2-foreground

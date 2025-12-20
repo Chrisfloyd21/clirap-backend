@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Créer le compte Admin (Sécurisé)
+        // 1. Création de l'Admin (si inexistant)
         $admin = User::firstOrCreate(
             ['email' => 'admin@clirap.it'],
             [
@@ -21,21 +21,19 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+        echo "✅ Admin prêt\n";
 
-        echo "✅ Compte Admin prêt : admin@clirap.it / password\n";
-
-        // 2. Créer des Projets fictifs
-        // ATTENTION : Cela ne marchera que si ProjectFactory utilise DB::raw() (voir ci-dessous)
-        Project::factory(10)->create(); 
+        // 2. Création des Projets (via la Factory corrigée)
+        Project::factory(10)->create();
         
-        // 3. Créer des Articles de Blog fictifs liés à l'admin
+        // 3. Création des Posts
         if ($admin) {
             Post::factory(10)->create(['user_id' => $admin->id]);
         }
 
-        // 4. Créer des Messages de contact fictifs
+        // 4. Messages
         Message::factory(5)->create();
         
-        echo "✅ Base de données remplie avec succès !\n";
+        echo "✅ Données insérées !\n";
     }
 }
