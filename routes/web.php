@@ -10,27 +10,38 @@ Route::get('/', function () {
         'message' => 'Clirap API is running properly 🚀',
         'laravel_version' => app()->version()
     ]);
-    // --- DÉBUT ROUTE TEMPORAIRE ---
-Route::get('/setup-admin-secret-xyz', function () {
+   // --- ROUTE DE CONFIGURATION ET REMPLISSAGE ---
+Route::get('/install-data-force-xyz', function () {
     try {
-        // On vérifie si l'admin existe déjà pour éviter les doublons
-        $user = User::firstOrCreate(
+        // 1. Nettoyage violent du cache
+        Artisan::call('optimize:clear');
+        Artisan::call('config:clear');
+        Artisan::call('route:clear');
+        
+        // 2. Création de l'Admin
+        $admin = User::firstOrCreate(
             ['email' => 'admin@clirap.it'],
             [
                 'name' => 'Super Admin',
-                'password' => Hash::make('password'), // Mot de passe : password
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
             ]
         );
 
-        return "✅ Succès ! L'admin a été créé (ou existait déjà).<br>Email: admin@clirap.it<br>Password: password";
+        // 3. Lancement des Seeders (Remplissage des données)
+        // On force l'exécution même en production
+        Artisan::call('db:seed', ['--force' => true]);
+
+        return "<h1>✅ SUCCÈS TOTAL !</h1>" .
+               "<p>1. Cache vidé.</p>" .
+               "<p>2. Admin créé : <b>admin@clirap.it</b> / <b>password</b></p>" .
+               "<p>3. Données factices (Seeders) générées avec succès.</p>";
+
     } catch (\Exception $e) {
-        return "❌ Erreur : " . $e->getMessage();
+        // En cas d'erreur, on l'affiche clairement
+        return "<h1>❌ ERREUR</h1><pre>" . $e->getMessage() . "</pre>";
     }
 });
-// --- FIN ROUTE TEMPORAIRE ---
 });
 
 // (Gardez votre route /install-site si vous l'avez laissée, sinon c'est bon)
