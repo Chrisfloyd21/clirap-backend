@@ -11,14 +11,18 @@ sleep 5
 # 2. MIGRATION
 # On crée les tables (dont la table 'cache' et 'users') AVANT de mettre en cache la config
 echo "🐘 Création des tables (Migration)..."
-php artisan migrate --force
+php artisan migrate --force --no-seed
 
-# 3. Remplissage des données (Seeders)
-# Maintenant que les tables existent, on peut remplir
+# 3. Rafraîchissement de l'autoloader (évite les erreurs "Class not found")
+echo "🔄 Rafraîchissement de l'autoloader..."
+composer dump-autoload
+
+# 4. Remplissage des données (Seeders)
+# Maintenant que les tables existent et l'autoloader est à jour, on peut remplir
 echo "🌱 Remplissage des données..."
 php artisan db:seed --force
 
-# 4. Mise en cache (Maintenant c'est sans danger, les tables existent)
+# 5. Mise en cache (Maintenant c'est sans danger, les tables existent)
 echo "🔥 Mise en cache de la configuration..."
 php artisan config:cache
 php artisan route:cache
