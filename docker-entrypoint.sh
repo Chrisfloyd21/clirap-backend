@@ -11,7 +11,7 @@ sleep 5
 # 2. MIGRATION
 # On crée les tables (dont la table 'cache' et 'users') AVANT de mettre en cache la config
 echo "🐘 Création des tables (Migration)..."
-php artisan migrate --force --no-seed
+php artisan migrate --force
 
 # 3. Rafraîchissement de l'autoloader (évite les erreurs "Class not found")
 echo "🔄 Rafraîchissement de l'autoloader..."
